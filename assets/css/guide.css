@@ -245,10 +245,110 @@ html[data-slot-fill="blanc"] x-import[id^="slot-"]:not([src]) {
   box-sizing: border-box;
 }
 
+/* ------------------------------------- 6bis. Motifs du template maître */
+
+/* Numérotation automatique : retirer une section renumérote les suivantes,
+   sans toucher au markup. `decimal-leading-zero` reproduit le format 01, 02. */
+body { counter-reset: ms-section; }
+section[data-nav] { counter-increment: ms-section; }
+.ms-section-num::before { content: counter(ms-section, decimal-leading-zero); }
+
+/* Valeur à remplacer pour chaque mariage. Volontairement visible : on doit
+   repérer d'un coup d'œil ce qui reste à renseigner.
+   Recensement : grep -o '\[\[[^]]*\]\]' "Guide des Maries.dc.html" */
+.ms-var {
+  background: color-mix(in srgb, var(--ms-accent, #A67C52) 18%, transparent);
+  border-bottom: 1px dashed var(--ms-accent, #A67C52);
+  padding: 0 .28em;
+  border-radius: 2px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+/* Encart posé sur une section dont la prestation ne couvre pas le moment. */
+.ms-hors-presta {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 28px 0 0;
+  padding: 20px 24px;
+  border-left: 2px solid var(--ms-accent, #A67C52);
+  background: rgba(25, 22, 17, .04);
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #6E6558;
+  text-align: left;
+}
+
+.ms-hors-presta b {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--ms-accent, #A67C52);
+  margin-bottom: 6px;
+}
+
+/* Conseil à fort enjeu : se remarque sans casser le rythme de lecture. */
+.ms-highlight {
+  border: 1px solid var(--ms-accent, #A67C52);
+  padding: 26px 28px;
+  border-radius: 2px;
+  background: rgba(166, 124, 82, .05);
+}
+
+.ms-highlight strong {
+  font-weight: 500;
+  color: #191611;
+}
+
+/* Frise horaire de la section « Le déroulé de votre journée ». */
+.ms-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(25, 22, 17, .12);
+}
+
+.ms-timeline li {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: 24px;
+  align-items: baseline;
+  padding: 17px 4px;
+  border-bottom: 1px solid rgba(25, 22, 17, .12);
+}
+
+.ms-timeline .h {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  color: var(--ms-accent, #A67C52);
+  white-space: nowrap;
+}
+
+.ms-timeline .t {
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #3d372e;
+}
+
+.ms-timeline .d {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: #8d8377;
+}
+
 /* ------------------------------------------------------- 7. Responsive */
 
-/* --- Tablette et en dessous : le menu passe en panneau latéral --- */
-@media (max-width: 880px) {
+/* --- Le menu passe en panneau latéral.
+   Seuil à 1500px et non 880 : avec 12 sections, la barre horizontale déborde
+   sur deux lignes dès 1440px (hauteur 61 -> 95px). Raccourcir les libellés ne
+   suffisait pas. Au-delà de 1500px, les 13 entrées tiennent sur une ligne. --- */
+@media (max-width: 1500px) {
   #ms-nav {
     padding: 14px 20px !important;
   }
@@ -296,9 +396,13 @@ html[data-slot-fill="blanc"] x-import[id^="slot-"]:not([src]) {
 /* --- Tablette : on resserre les respirations verticales --- */
 @media (max-width: 1024px) {
   #ms-intro { padding: 90px 24px 72px !important; gap: 32px !important; }
-  #preparatifs { padding: 32px 24px 90px !important; }
+  #deroule { padding: 32px 24px 90px !important; }
+  #preparatifs,
   #firstlook,
-  #invites,
+  #ceremonies,
+  #vin-honneur,
+  #repas,
+  #soiree,
   #naturel,
   #checklist { padding: 0 24px 90px !important; }
   #groupes { padding: 90px 24px !important; }
@@ -324,9 +428,13 @@ html[data-slot-fill="blanc"] x-import[id^="slot-"]:not([src]) {
   #ms-marquee span { font-size: 21px !important; }
   #ms-marquee { padding: 18px 0 !important; }
 
-  #preparatifs { padding: 24px 20px 72px !important; }
+  #deroule { padding: 24px 20px 72px !important; }
+  #preparatifs,
   #firstlook,
-  #invites,
+  #ceremonies,
+  #vin-honneur,
+  #repas,
+  #soiree,
   #naturel,
   #checklist { padding: 0 20px 72px !important; }
   #groupes { padding: 72px 20px !important; }
@@ -341,11 +449,11 @@ html[data-slot-fill="blanc"] x-import[id^="slot-"]:not([src]) {
     padding: 32px 24px !important;
   }
 
-  /* Décalage décoratif qui rognait la photo hors de la colonne. */
-  #preparatifs [data-rvz]:nth-of-type(2) { margin-left: 0 !important; }
+  /* Encadré « Chers invités », désormais dans la section Cérémonies. */
+  .ms-invites-box { padding: 36px 24px !important; }
 
-  /* Encadré « Chers invités ». */
-  #invites > div[data-rv]:nth-of-type(2) { padding: 36px 24px !important; }
+  /* La frise horaire passe en une colonne : l'heure au-dessus du libellé. */
+  .ms-timeline li { grid-template-columns: 1fr; gap: 4px; }
 }
 
 /* Filet de sécurité : rien ne dépasse jamais sa colonne. */
