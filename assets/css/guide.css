@@ -164,6 +164,96 @@ nav[data-on="1"] {
   font-weight: 400;
 }
 
+/* --- Menus déroulants ------------------------------------------------- */
+
+.ms-nav-grp { position: relative; }
+
+.ms-nav-grp-label {
+  all: unset;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+}
+
+.ms-nav-grp-label::after {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  opacity: .55;
+  transition: opacity .25s, transform .25s;
+}
+
+.ms-nav-sub a { white-space: nowrap; }
+
+/* Ordinateur : le sous-menu se déplie au survol et au focus clavier. Le
+   `:focus-within` n'est pas décoratif — sans lui, les entrées seraient
+   inatteignables autrement qu'à la souris. */
+@media (min-width: 1024px) {
+  .ms-nav-sub {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    padding: 12px 0;
+    background: #17140F;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, .28);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(8px);
+    transition: opacity .28s cubic-bezier(.16, 1, .3, 1),
+                transform .28s cubic-bezier(.16, 1, .3, 1),
+                visibility .28s;
+  }
+
+  /* Passerelle invisible sous la tête de menu : sans elle, l'écart entre le
+     bouton et le panneau referme le menu pendant la descente du curseur. */
+  .ms-nav-grp::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 22px;
+  }
+
+  .ms-nav-grp:hover .ms-nav-sub,
+  .ms-nav-grp:focus-within .ms-nav-sub {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .ms-nav-grp:hover .ms-nav-grp-label::after,
+  .ms-nav-grp:focus-within .ms-nav-grp-label::after {
+    opacity: 1;
+    transform: translateY(0) rotate(225deg);
+  }
+
+  .ms-nav-sub a {
+    padding: 11px 24px;
+    color: #EDE7DC !important;
+    font-size: 11px;
+    letter-spacing: .18em;
+    transition: background .25s, color .25s;
+  }
+
+  .ms-nav-sub a:hover {
+    color: var(--ms-accent, #A67C52) !important;
+    background: rgba(237, 231, 220, .06);
+  }
+}
+
 /* L'overlay doit être défini ICI et non en style inline : un style inline bat
    toute règle de feuille de style, l'overlay restait donc `pointer-events:none`
    même menu ouvert — le tap « en dehors du menu » ne fermait jamais rien. */
@@ -345,10 +435,27 @@ section[data-nav] { counter-increment: ms-section; }
 /* ------------------------------------------------------- 7. Responsive */
 
 /* --- Le menu passe en panneau latéral.
-   Seuil à 1500px et non 880 : avec 12 sections, la barre horizontale déborde
-   sur deux lignes dès 1440px (hauteur 61 -> 95px). Raccourcir les libellés ne
-   suffisait pas. Au-delà de 1500px, les 13 entrées tiennent sur une ligne. --- */
-@media (max-width: 1500px) {
+   Les douze sections sont regroupées sous cinq têtes de menu, la barre tient
+   donc à nouveau sur une ligne dès 1024px. Dans le panneau, pas de déroulant :
+   les groupes servent d'intertitres et tout est visible d'un coup. --- */
+@media (max-width: 1023px) {
+  .ms-nav-grp-label {
+    display: block;
+    padding: 18px 4px 6px;
+    font-size: 10px;
+    letter-spacing: .3em;
+    color: var(--ms-accent, #A67C52) !important;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .ms-nav-grp-label::after { display: none; }
+
+  .ms-nav-sub {
+    display: flex;
+    flex-direction: column;
+  }
+
   #ms-nav {
     padding: 14px 20px !important;
   }
