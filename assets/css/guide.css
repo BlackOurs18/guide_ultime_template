@@ -1,0 +1,372 @@
+/* ==========================================================================
+   Guide des Mariés — Matin Shakurov
+   Feuille de style principale.
+
+   Organisation :
+     1. Base & typographie
+     2. Curseur personnalisé
+     3. Animations d'apparition (reveal)
+     4. Navigation & menu mobile
+     5. FAQ (accordéon)
+     6. Emplacements photo (image-slot)
+     7. Responsive — tablette & mobile
+
+   NOTE : le template garde des attributs `style=""` inline (idiome du format
+   .dc.html). Les surcharges responsive ci-dessous utilisent donc `!important`
+   là où elles doivent battre un style inline. Voir §7.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 1. Base */
+
+html {
+  scroll-behavior: smooth;
+  /* `clip` et NON `hidden` : `hidden` ferait de <html> un conteneur de
+     défilement, ce qui casserait le `position:sticky` de la liste des groupes.
+     Sans cette règle, le bloc conteneur initial s'élargit au-delà du viewport
+     et tous les éléments `position:fixed` (nav, overlay) deviennent trop
+     larges — le bouton burger se retrouve alors hors de l'écran. */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: #F4EFE7;
+  color: #191611;
+  font-family: Jost, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+a {
+  color: var(--ms-accent, #A67C52);
+  text-decoration: none;
+  transition: color .3s;
+}
+
+/* La couleur de survol dépend du fond. En dur, elle valait #191611 : sur les
+   sections sombres (#17140F) le lien devenait illisible en se confondant avec
+   le fond. Les blocs sombres redéfinissent la variable ci-dessous. */
+a:hover { color: var(--ms-link-hover, #191611); }
+
+#couple,
+#contact,
+#ms-nav-links { --ms-link-hover: #EDE7DC; }
+
+::selection {
+  background: var(--ms-accent, #A67C52);
+  color: #F4EFE7;
+}
+
+/* ------------------------------------------------------- 2. Curseur perso */
+
+#ms-cur-dot {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: none;
+  z-index: 99;
+  mix-blend-mode: difference;
+  will-change: translate;
+  transition: scale .3s cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Grossit uniquement au survol d'un élément cliquable. La position passe par
+   `translate` et non `transform` : les propriétés individuelles s'appliquent
+   dans l'ordre translate → rotate → scale → transform, donc une position
+   placée dans `transform` serait multipliée par le `scale` du survol. */
+#ms-cur-dot[data-hot="1"] { scale: 2.2; }
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-motion="cinématique"],
+  html[data-motion="cinématique"] body,
+  html[data-motion="cinématique"] * { cursor: none !important; }
+
+  html[data-motion="cinématique"] #ms-cur-dot { display: block; }
+}
+
+/* --------------------------------------------------------- 3. Reveal / plx */
+
+[data-rv] {
+  opacity: 0;
+  transform: translateY(44px);
+  transition: opacity 1.1s cubic-bezier(.16, 1, .3, 1),
+              transform 1.3s cubic-bezier(.16, 1, .3, 1);
+}
+
+[data-rv="on"] { opacity: 1; transform: translateY(0); }
+[data-rv][data-dir="l"] { transform: translateX(-72px); }
+[data-rv][data-dir="r"] { transform: translateX(72px); }
+[data-rv="on"][data-dir="l"],
+[data-rv="on"][data-dir="r"] { transform: translateX(0); }
+
+[data-rvz] {
+  clip-path: inset(12% 10%);
+  transition: opacity 1.1s cubic-bezier(.16, 1, .3, 1),
+              transform 1.3s cubic-bezier(.16, 1, .3, 1),
+              clip-path 1.6s cubic-bezier(.16, 1, .3, 1);
+}
+
+[data-rvz][data-rv="on"] { clip-path: inset(0% 0%); }
+[data-rvz] > [data-plx] { scale: 1.18; transition: scale 2s cubic-bezier(.16, 1, .3, 1); }
+[data-rvz][data-rv="on"] > [data-plx] { scale: 1; }
+
+html[data-motion="sobre"] [data-rv] { transition-duration: .45s, .45s; }
+html[data-motion="sobre"] [data-rvz] { clip-path: inset(0% 0%); }
+html[data-motion="sobre"] [data-rvz] > [data-plx] { scale: 1; }
+
+/* Respect de la préférence système : on coupe le mouvement, pas le contenu. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  [data-rv],
+  [data-rv][data-dir="l"],
+  [data-rv][data-dir="r"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  [data-rvz] { clip-path: none !important; }
+  [data-rvz] > [data-plx] { scale: 1 !important; }
+}
+
+/* ------------------------------------------------ 4. Nav & menu hamburger */
+
+@keyframes msUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes msFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes msMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes msLine { 0% { transform: translateY(-100%); } 55%, 100% { transform: translateY(100%); } }
+
+nav[data-on="1"] {
+  background: rgba(244, 239, 231, .88) !important;
+  backdrop-filter: blur(16px);
+  color: #191611 !important;
+  border-bottom: 1px solid rgba(25, 22, 17, .08) !important;
+}
+
+/* Défini ici et non en style inline, pour la même raison que l'overlay ci-dessous :
+   en inline, `flex-wrap:wrap` et `gap:26px` battaient les surcharges mobiles. Le
+   panneau repassait en `wrap` et, dès que la colonne dépassait la hauteur de
+   l'écran, les derniers liens repartaient dans une 2e colonne à droite. */
+#ms-nav-links {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* L'overlay doit être défini ICI et non en style inline : un style inline bat
+   toute règle de feuille de style, l'overlay restait donc `pointer-events:none`
+   même menu ouvert — le tap « en dehors du menu » ne fermait jamais rien. */
+#ms-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 13, 10, .4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s;
+  z-index: 78;
+}
+
+/* L'état vit sur <html> plutôt que sur un sélecteur de frère (`~`) : il ne
+   dépend plus de l'ordre des noeuds produit par le compilateur du template. */
+html[data-menu-open="1"] #ms-nav-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#ms-burger span {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transition: transform .4s cubic-bezier(.16, 1, .3, 1), opacity .3s;
+}
+
+html[data-menu-open="1"] #ms-burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+html[data-menu-open="1"] #ms-burger span:nth-child(2) { opacity: 0; }
+html[data-menu-open="1"] #ms-burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Le burger doit rester au-dessus du panneau pour se transformer en croix de
+   fermeture. `!important` est nécessaire : le `style="all:unset"` inline du
+   bouton réinitialise `position` et `z-index` avec la spécificité d'un style
+   inline, qui bat sinon cette règle. */
+#ms-burger {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* --------------------------------------------------------------- 5. FAQ */
+
+[data-faq] [data-faq-body] {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: grid-template-rows .7s cubic-bezier(.22, 1, .36, 1),
+              opacity .5s ease,
+              transform .7s cubic-bezier(.22, 1, .36, 1);
+}
+
+[data-faq="1"] [data-faq-body] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  transition: grid-template-rows .7s cubic-bezier(.22, 1, .36, 1),
+              opacity .55s ease .1s,
+              transform .7s cubic-bezier(.22, 1, .36, 1);
+}
+
+[data-faq] [data-faq-icon] { transition: transform .5s cubic-bezier(.16, 1, .3, 1); }
+[data-faq="1"] [data-faq-icon] { transform: rotate(45deg); }
+
+/* ------------------------------------------------- 6. Emplacements photo */
+
+/* TEMPORAIRE — aucune photo n'est encore posée : les emplacements sont rendus
+   en aplat blanc pour juger la mise en page seule. Retirer ce bloc (et le
+   `data-slot-fill` correspondant dans le composant) pour revenir aux
+   placeholders normaux de <image-slot>. */
+html[data-slot-fill="blanc"] image-slot:not([src]),
+html[data-slot-fill="blanc"] x-import[id^="slot-"]:not([src]) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border: 1px solid rgba(25, 22, 17, .10);
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------- 7. Responsive */
+
+/* --- Tablette et en dessous : le menu passe en panneau latéral --- */
+@media (max-width: 880px) {
+  #ms-nav {
+    padding: 14px 20px !important;
+  }
+
+  #ms-burger { display: flex !important; }
+
+  #ms-nav-links {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(78vw, 320px);
+    height: 100dvh;
+    box-sizing: border-box;
+    background: #17140F;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    /* `safe center` et non `center` : sur un écran court, un contenu centré qui
+       déborde d'un conteneur défilable voit son début rogné et inatteignable. */
+    justify-content: safe center;
+    gap: 4px;
+    padding: 100px 32px;
+    box-shadow: -30px 0 60px rgba(0, 0, 0, .3);
+    transform: translateX(100%);
+    transition: transform .5s cubic-bezier(.16, 1, .3, 1);
+    overflow-y: auto;
+    font-size: 13px;
+  }
+
+  html[data-menu-open="1"] #ms-nav-links { transform: translateX(0); }
+
+  /* Cibles tactiles : 16px de haut à l'origine, bien en dessous du minimum
+     recommandé de ~44px. */
+  #ms-nav-links a {
+    color: #EDE7DC !important;
+    padding: 13px 4px;
+    font-size: 13px;
+    letter-spacing: .18em;
+  }
+
+  #ms-nav-contact { color: var(--ms-accent, #A67C52) !important; }
+}
+
+/* --- Tablette : on resserre les respirations verticales --- */
+@media (max-width: 1024px) {
+  #ms-intro { padding: 90px 24px 72px !important; gap: 32px !important; }
+  #preparatifs { padding: 32px 24px 90px !important; }
+  #firstlook,
+  #invites,
+  #naturel,
+  #checklist { padding: 0 24px 90px !important; }
+  #groupes { padding: 90px 24px !important; }
+  #couple { padding: 90px 0 !important; }
+  #faq { padding: 0 24px 100px !important; }
+  #contact { padding: 90px 24px 48px !important; }
+}
+
+/* --- Mobile --- */
+@media (max-width: 640px) {
+  /* 100vh inclut la barre d'URL mobile et provoque un saut au scroll.
+     `svh` = plus petite hauteur visible, stable. */
+  #top {
+    height: 100svh !important;
+    min-height: 520px !important;
+  }
+
+  #ms-hero-inner { padding: 90px 20px 110px !important; }
+
+  #ms-intro { padding: 72px 20px 56px !important; gap: 26px !important; }
+
+  /* Bandeau défilant : 30px est trop imposant sur petit écran. */
+  #ms-marquee span { font-size: 21px !important; }
+  #ms-marquee { padding: 18px 0 !important; }
+
+  #preparatifs { padding: 24px 20px 72px !important; }
+  #firstlook,
+  #invites,
+  #naturel,
+  #checklist { padding: 0 20px 72px !important; }
+  #groupes { padding: 72px 20px !important; }
+  #couple { padding: 72px 0 !important; }
+  #faq { padding: 0 20px 80px !important; }
+  #contact { padding: 72px 20px 40px !important; }
+
+  /* La carte « Exemple de liste » n'a pas de colonne voisine à accompagner
+     en une seule colonne : collante, elle resterait figée à l'écran. */
+  #groupes [data-rv][data-dir="r"] {
+    position: static !important;
+    padding: 32px 24px !important;
+  }
+
+  /* Décalage décoratif qui rognait la photo hors de la colonne. */
+  #preparatifs [data-rvz]:nth-of-type(2) { margin-left: 0 !important; }
+
+  /* Encadré « Chers invités ». */
+  #invites > div[data-rv]:nth-of-type(2) { padding: 36px 24px !important; }
+}
+
+/* Filet de sécurité : rien ne dépasse jamais sa colonne. */
+img,
+image-slot { max-width: 100%; }
+
+/* Très petits écrans (≤ 360px) : le panneau doit rester confortable. */
+@media (max-width: 360px) {
+  /* La grille d'intro impose des pistes de 280px et un enfant `span 2`, soit
+     328px de large dans un conteneur de 272px. En une seule colonne, plus de
+     débordement. */
+  #ms-intro {
+    grid-template-columns: 1fr !important;
+    gap: 26px !important;
+  }
+
+  #ms-intro > div {
+    grid-column: auto !important;
+    min-width: 0 !important;
+  }
+
+  #ms-nav-links { width: min(86vw, 300px); padding: 90px 24px; }
+  #ms-nav { padding: 12px 16px !important; }
+}

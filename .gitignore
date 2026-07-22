@@ -1,0 +1,7 @@
+# Dépendances locales éventuelles
+node_modules/
+
+# Fichiers système
+Thumbs.db
+desktop.ini
+.DS_Store
