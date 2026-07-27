@@ -202,11 +202,15 @@ html[data-loading="1"] #ms-marquee * { animation-play-state: paused !important; 
    travers des lettres et le contraste s'effondrait par endroits. */
 .ms-hero-bg,
 #ms-preloader .ms-pl-bg {
-  filter: blur(10px);
+  filter: blur(20px);
   /* Un flou échantillonne au-delà des bords de l'élément : sur un fond calé
-     à `inset: 0`, le cadre se retrouve cerné d'un liseré délavé. L'agrandir
-     de 6 % repousse ce liseré hors champ ; les parents recadrent. */
-  transform: scale(1.06);
+     à `inset: 0`, le cadre se retrouve cerné d'un liseré délavé. On déborde
+     donc de trois fois le rayon, et les parents recadrent (`#top` et
+     `#ms-preloader` sont tous deux en `overflow: hidden`).
+     En pixels et non en pourcentage : un débord proportionnel se réduit avec
+     la largeur de l'écran, et sur un téléphone il serait devenu trop mince
+     pour couvrir le rayon. `!important` bat le `inset: 0` inline du hero. */
+  inset: -60px !important;
 }
 
 #ms-preloader .ms-pl-core {
