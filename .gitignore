@@ -1,6 +1,9 @@
 # Dépendances locales éventuelles
 node_modules/
 
+# Originaux pleine résolution des photos (sauvegarde locale, inutiles en ligne)
+assets/images/_originals/
+
 # Fichiers système
 Thumbs.db
 desktop.ini
