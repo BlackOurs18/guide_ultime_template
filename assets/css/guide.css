@@ -136,6 +136,126 @@ html[data-motion="sobre"] [data-rvz] > [data-plx] { scale: 1; }
   [data-rvz] > [data-plx] { scale: 1 !important; }
 }
 
+/* ------------------------------------------------- 3 bis. Écran d'accueil */
+
+/* Le guide sert les photos en pleine résolution (~10 Mo au total, profils ICC
+   Adobe RGB conservés). Sans rideau, on verrait le hero se composer sur un
+   fond vide pendant que l'image de fond arrive. L'écran d'accueil couvre ce
+   temps, reste affiché 2 s au minimum, puis se retire d'un balayage vers le
+   haut. La logique de sortie vit dans le script inline du <head> : elle ne
+   dépend pas de React, pour qu'un runtime en échec ne laisse jamais le
+   rideau collé à l'écran. */
+
+#ms-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #17140F;
+  transform: translateY(0);
+  /* Courbe plus « rideau » que celle des reveals : départ franc, arrivée
+     amortie. Doit rester synchronisée avec MS_SWEEP_MS dans le <head>. */
+  transition: transform 1.1s cubic-bezier(.76, 0, .24, 1);
+  will-change: transform;
+}
+
+html[data-loading="0"] #ms-preloader { transform: translateY(-100%); }
+
+/* Le scroll est neutralisé tant que le rideau est là, sinon la molette
+   déplace la page derrière lui et on arrive au milieu du guide.
+   `body` et non `html` : faire de <html> un conteneur de défilement
+   casserait le `position:sticky` de la liste des groupes (voir §1). */
+html[data-loading="1"] body { overflow: hidden; }
+
+/* Les animations d'entrée du hero et de la nav (msUp, msFade, msLine) partent
+   au parse, delays compris : derrière un rideau affiché 2 s elles seraient
+   terminées avant d'être vues. On les gèle, elles démarrent au balayage. */
+html[data-loading="1"] #ms-nav *,
+html[data-loading="1"] #ms-nav,
+html[data-loading="1"] #top *,
+html[data-loading="1"] #ms-marquee * { animation-play-state: paused !important; }
+
+#ms-preloader .ms-pl-bg {
+  position: absolute;
+  inset: 0;
+  background: url("../images/face-a-face.jpg") center / cover no-repeat;
+  opacity: .62;
+}
+
+/* Même dégradé que le hero : le rideau et l'écran qu'il découvre partagent
+   exactement le même fond, le balayage n'introduit donc aucune rupture. */
+#ms-preloader .ms-pl-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(23, 20, 15, .55) 0%, rgba(23, 20, 15, .15) 45%, rgba(23, 20, 15, .82) 100%);
+}
+
+#ms-preloader .ms-pl-core {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  color: #EDE7DC;
+  padding: 0 24px;
+  animation: msFade 1s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+#ms-preloader .ms-pl-mark {
+  font-size: 12px;
+  letter-spacing: .5em;
+  text-transform: uppercase;
+  /* letter-spacing ajoute l'espace APRÈS la dernière lettre : sans ce
+     décalage le bloc paraît désaxé vers la gauche sous la barre. */
+  padding-left: .5em;
+  color: var(--ms-accent, #A67C52);
+}
+
+#ms-preloader .ms-pl-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  color: rgba(237, 231, 220, .92);
+}
+
+/* Rail fixe + segment qui le balaie : l'horizontale de `msLine`, l'animation
+   du trait « Découvrir » du hero. Aucune barre de progression chiffrée — le
+   temps de chargement réel n'est pas connu à l'avance. */
+#ms-preloader .ms-pl-rail {
+  position: relative;
+  width: 180px;
+  max-width: 60vw;
+  height: 1px;
+  overflow: hidden;
+  background: rgba(237, 231, 220, .18);
+}
+
+#ms-preloader .ms-pl-rail span {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--ms-accent, #A67C52) 40%, var(--ms-accent, #A67C52) 60%, transparent);
+  animation: msLoad 1.6s cubic-bezier(.65, 0, .35, 1) infinite;
+}
+
+@keyframes msLoad { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
+
+/* Mouvement réduit : le rideau reste (il sert à masquer le chargement, pas à
+   faire joli) mais il disparaît en fondu au lieu de balayer, et le segment
+   doré cesse de courir. Idem en mode « sobre ». */
+@media (prefers-reduced-motion: reduce) {
+  #ms-preloader { transition: opacity .45s linear; }
+  html[data-loading="0"] #ms-preloader { transform: none; opacity: 0; }
+  #ms-preloader .ms-pl-rail span { animation: none; opacity: .5; }
+  #ms-preloader .ms-pl-core { animation: none; }
+}
+
+html[data-motion="sobre"] #ms-preloader { transition: opacity .45s linear; }
+html[data-motion="sobre"][data-loading="0"] #ms-preloader { transform: none; opacity: 0; }
+
 /* ------------------------------------------------ 4. Nav & menu hamburger */
 
 @keyframes msUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }

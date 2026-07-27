@@ -10,6 +10,54 @@
 <script src="./assets/vendor/react.production.min.js"></script>
 <script src="./assets/vendor/react-dom.production.min.js"></script>
 <script src="./assets/vendor/support.js"></script>
+
+<!-- Le fond de l'écran d'accueil est aussi celui du hero : on le demande dès
+     le <head> pour qu'il ne soit pas découvert à l'application du CSS. -->
+<link rel="preload" as="image" href="./assets/images/face-a-face.jpg">
+
+<!-- Sans JavaScript, personne ne lèverait le rideau : on ne l'affiche pas. -->
+<noscript><style>#ms-preloader { display: none !important; }</style></noscript>
+
+<script>
+/* Écran d'accueil — la mise en forme vit au §3 bis de assets/css/guide.css.
+   Ce script est ici, dans le <head>, pour deux raisons :
+     - `data-loading` doit être posé avant le premier rendu, sinon les
+       animations d'entrée du hero démarrent le temps d'un éclair avant d'être
+       gelées ;
+     - la sortie ne doit dépendre ni de React ni du runtime .dc — s'ils
+       échouent, le rideau doit se lever quand même. */
+(function () {
+  var racine = document.documentElement;
+  racine.setAttribute('data-loading', '1');
+
+  var MIN_MS = 2000;    // durée d'affichage minimale voulue
+  var MAX_MS = 12000;   // filet : le guide n'est jamais retenu au-delà
+  var SWEEP_MS = 1100;  // doit suivre la transition de #ms-preloader (guide.css)
+  var depart = Date.now();
+  var leve = false;
+
+  function lever() {
+    if (leve) return;
+    leve = true;
+    // `load` peut tomber avant les 2 s (page en cache) : on complète l'attente.
+    setTimeout(function () {
+      racine.setAttribute('data-loading', '0');
+      var el = document.getElementById('ms-preloader');
+      if (!el) return;
+      // Une fois hors champ le rideau ne sert plus, mais il garde une couche de
+      // composition plein écran : on le retire. Le minuteur couvre le cas où
+      // `transitionend` ne tire pas (onglet en arrière-plan, transition coupée).
+      var oter = function () { if (el.parentNode) el.parentNode.removeChild(el); };
+      el.addEventListener('transitionend', oter, { once: true });
+      setTimeout(oter, SWEEP_MS + 400);
+    }, Math.max(0, MIN_MS - (Date.now() - depart)));
+  }
+
+  if (document.readyState === 'complete') lever();
+  else window.addEventListener('load', lever);
+  setTimeout(lever, MAX_MS);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -21,6 +69,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Jost:wght@200;300;400;500&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./assets/css/guide.css">
 </helmet>
+
+<!-- Écran d'accueil. Les styles critiques sont inline pour qu'il couvre l'écran
+     même si guide.css n'est pas encore appliqué ; le décor et le balayage de
+     sortie sont au §3 bis de la feuille. `transform` reste hors de l'inline :
+     c'est la règle `html[data-loading="0"]` qui doit pouvoir le piloter. -->
+<div id="ms-preloader" role="status" aria-live="polite" aria-label="Chargement du guide" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:#17140F">
+  <div class="ms-pl-bg"></div>
+  <div class="ms-pl-veil"></div>
+  <div class="ms-pl-core">
+    <div class="ms-pl-mark">Guide des mariés</div>
+    <div class="ms-pl-name">Matin Shakurov</div>
+    <div class="ms-pl-rail"><span></span></div>
+  </div>
+</div>
 
 <div id="ms-progress" style="position:fixed;top:0;left:0;height:2px;width:0%;background:var(--ms-accent,#A67C52);z-index:90"></div>
 <div id="ms-cur-dot" data-hot="0" style="translate:-100px -100px"></div>
@@ -521,7 +583,7 @@
 <footer id="contact" style="scroll-margin-top:90px;background:#17140F;color:#EDE7DC;padding:130px 24px 60px;text-align:center;position:relative;overflow:hidden">
   <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;align-items:center">
     <div data-rv="" style="width:132px;height:132px">
-      <image-slot id="slot-portrait" shape="circle" src="./assets/images/photo_profil.jpg" fit="cover" placeholder="Votre portrait" style="width:132px;height:132px"></image-slot>
+      <image-slot id="slot-portrait" shape="circle" src="./assets/images/photo_profil.png" fit="cover" placeholder="Votre portrait" style="width:132px;height:132px"></image-slot>
     </div>
     <p data-rv="" style="margin:44px 0 0;font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,42px);line-height:1.4;font-weight:400;text-wrap:balance">Merci de m'accorder votre confiance pour ce jour unique.<span style="font-style:italic"> Au plaisir d'écrire votre histoire en images.</span></p>
     <div data-rv="" style="margin-top:36px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:30px;color:var(--ms-accent,#A67C52)">Matin Shakurov</div>
