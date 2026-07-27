@@ -154,6 +154,9 @@ html[data-motion="sobre"] [data-rvz] > [data-plx] { scale: 1; }
   align-items: center;
   justify-content: center;
   background: #17140F;
+  /* Recadre le fond agrandi de 6 % pour le flou (voir `.ms-pl-bg`) ;
+     `#top` le fait déjà de son côté. */
+  overflow: hidden;
   transform: translateY(0);
   /* Courbe plus « rideau » que celle des reveals : départ franc, arrivée
      amortie. Doit rester synchronisée avec MS_SWEEP_MS dans le <head>. */
@@ -185,11 +188,25 @@ html[data-loading="1"] #ms-marquee * { animation-play-state: paused !important; 
 }
 
 /* Même dégradé que le hero : le rideau et l'écran qu'il découvre partagent
-   exactement le même fond, le balayage n'introduit donc aucune rupture. */
+   exactement le même fond, le balayage n'introduit donc aucune rupture.
+   Toute retouche ici doit être reportée sur le voile du hero, et inversement. */
 #ms-preloader .ms-pl-veil {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(23, 20, 15, .55) 0%, rgba(23, 20, 15, .15) 45%, rgba(23, 20, 15, .82) 100%);
+  background: linear-gradient(180deg, rgba(23, 20, 15, .55) 0%, rgba(23, 20, 15, .35) 45%, rgba(23, 20, 15, .82) 100%);
+}
+
+/* Flou du fond — hero et écran d'accueil traités ensemble, pour la même
+   raison que le dégradé. Le titre du hero est du texte clair posé sur une
+   photo en plein soleil : sans flou, les détails nets du fond passaient au
+   travers des lettres et le contraste s'effondrait par endroits. */
+.ms-hero-bg,
+#ms-preloader .ms-pl-bg {
+  filter: blur(10px);
+  /* Un flou échantillonne au-delà des bords de l'élément : sur un fond calé
+     à `inset: 0`, le cadre se retrouve cerné d'un liseré délavé. L'agrandir
+     de 6 % repousse ce liseré hors champ ; les parents recadrent. */
+  transform: scale(1.06);
 }
 
 #ms-preloader .ms-pl-core {
